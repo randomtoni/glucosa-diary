@@ -1,5 +1,9 @@
 # Glucose 🩸
 
+**🔗 Live demo: [randomtoni.github.io/glucosa-diary](https://randomtoni.github.io/glucosa-diary)**
+
+> **📱 Preview at phone width.** This is a mobile-first PWA built for a narrow screen — in a full-width desktop browser it will look stretched and the styles won't read as intended. To see it properly, open your browser's device toolbar (`Cmd`/`Ctrl` + `Shift` + `M`) and pick a phone, or narrow the window to ~390 px. Better still, open the link on your iPhone and add it to the home screen (Compartir → Agregar a inicio).
+
 A PWA for keeping a **blood glucose diary**. Manual logging, simple and **100% offline**: everything is stored on the device (IndexedDB), with no accounts, no server and no connection.
 
 Designed to be used from the iPhone, added to the home screen from Safari.
