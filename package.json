@@ -1,0 +1,13 @@
+{
+  "name": "glucosa",
+  "version": "1.0.0",
+  "description": "PWA — diario de glucosa en sangre (offline, sin backend).",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "test": "node --test",
+    "icons": "node scripts/generate-icons.mjs",
+    "serve": "npx serve ."
+  },
+  "license": "MIT"
+}

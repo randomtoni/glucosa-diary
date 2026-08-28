@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="es-AR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Glucosa</title>
+    <meta name="description" content="Diario de glucosa en sangre — registro simple y offline." />
+    <meta name="theme-color" content="#0d9488" />
+    <link rel="manifest" href="manifest.json" />
+    <link rel="icon" type="image/png" sizes="32x32" href="icons/favicon-32.png" />
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Glucosa" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="app-title">
+        <img src="icons/favicon-32.png" alt="" width="26" height="26" class="app-logo" />
+        <h1>Glucosa</h1>
+      </div>
+      <button id="menu-btn" class="icon-btn" aria-label="Opciones y datos" aria-haspopup="dialog">
+        <svg viewBox="0 0 24 24" width="24" height="24" aria-hidden="true">
+          <circle cx="12" cy="5" r="1.9" /><circle cx="12" cy="12" r="1.9" /><circle cx="12" cy="19" r="1.9" />
+        </svg>
+      </button>
+    </header>
+
+    <nav class="tabs" role="tablist" aria-label="Vistas">
+      <button class="tab is-active" id="tab-log" role="tab" aria-selected="true" aria-controls="view-log">
+        Registro
+      </button>
+      <button class="tab" id="tab-chart" role="tab" aria-selected="false" aria-controls="view-chart">
+        Gráfico
+      </button>
+    </nav>
+
+    <main>
+      <section id="view-log" role="tabpanel" aria-labelledby="tab-log" class="view is-active">
+        <div id="backup-banner" class="banner" hidden>
+          <span class="banner-text">Hace más de 30 días del último backup. Conviene guardar una copia.</span>
+          <span class="banner-actions">
+            <button id="banner-backup" class="banner-btn primary">Guardar backup</button>
+            <button id="banner-dismiss" class="banner-btn" aria-label="Ocultar aviso">Ahora no</button>
+          </span>
+        </div>
+
+        <div id="log-empty" class="empty-state" hidden>
+          <div class="empty-drop" aria-hidden="true">
+            <img src="icons/icon-192.png" alt="" width="72" height="72" />
+          </div>
+          <p class="empty-line">
+            Registrá tu glucosa varias veces al día y seguí tu evolución — tocá el botón
+            <strong>+</strong> para empezar.
+          </p>
+          <svg class="empty-arrow" viewBox="0 0 60 90" aria-hidden="true" width="52" height="78">
+            <path d="M30 4 C 30 40, 30 55, 44 72" fill="none" stroke-width="3" stroke-linecap="round" />
+            <path d="M35 60 L 46 76 L 30 78" fill="none" stroke-width="3" stroke-linecap="round" stroke-linejoin="round" />
+          </svg>
+        </div>
+
+        <div id="log-list" class="log-list"></div>
+      </section>
+
+      <section id="view-chart" role="tabpanel" aria-labelledby="tab-chart" class="view" hidden>
+        <div class="range-selector" role="group" aria-label="Período">
+          <button class="range-btn is-active" data-days="7">7 días</button>
+          <button class="range-btn" data-days="14">14 días</button>
+          <button class="range-btn" data-days="30">30 días</button>
+          <button class="range-btn" data-days="90">90 días</button>
+        </div>
+
+        <div class="stats-strip" id="stats-strip">
+          <div class="stat">
+            <span class="stat-label">Promedio</span>
+            <span class="stat-value" id="stat-avg">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Mínimo</span>
+            <span class="stat-value" id="stat-min">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">Máximo</span>
+            <span class="stat-value" id="stat-max">—</span>
+          </div>
+          <div class="stat">
+            <span class="stat-label">En rango</span>
+            <span class="stat-value" id="stat-range">—</span>
+          </div>
+        </div>
+
+        <div class="chart-wrap" id="chart-wrap"></div>
+        <p class="chart-hint" id="chart-count">—</p>
+      </section>
+    </main>
+
+    <button id="fab" class="fab" aria-label="Agregar lectura">
+      <svg viewBox="0 0 24 24" width="30" height="30" aria-hidden="true">
+        <path d="M12 5v14M5 12h14" stroke-width="2.4" stroke-linecap="round" />
+      </svg>
+    </button>
+
+    <!-- Add / edit sheet -->
+    <div class="sheet-backdrop" id="form-backdrop" hidden></div>
+    <div class="sheet" id="form-sheet" role="dialog" aria-modal="true" aria-labelledby="form-title" hidden>
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="form-title">Nueva lectura</h2>
+        <button class="icon-btn" id="form-close" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke-width="2.2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+
+      <form id="reading-form" novalidate>
+        <input type="hidden" id="reading-id" />
+
+        <div class="value-field">
+          <input
+            id="value-input"
+            type="text"
+            inputmode="numeric"
+            pattern="[0-9]*"
+            autocomplete="off"
+            enterkeyhint="done"
+            placeholder="0"
+            aria-label="Valor de glucosa en mg/dL"
+            maxlength="3"
+          />
+          <span class="value-unit">mg/dL</span>
+        </div>
+        <p class="field-error" id="value-error" hidden>Ingresá un valor entre 20 y 600.</p>
+
+        <fieldset class="tags-field">
+          <legend>Contexto</legend>
+          <div class="tag-chips" id="tag-chips"></div>
+        </fieldset>
+
+        <div class="datetime-field">
+          <label class="dt-col">
+            <span>Fecha</span>
+            <input type="date" id="date-input" required />
+          </label>
+          <label class="dt-col">
+            <span>Hora</span>
+            <input type="time" id="time-input" required />
+          </label>
+        </div>
+
+        <label class="comment-field">
+          <span>Comentario (opcional)</span>
+          <textarea id="comment-input" rows="2" maxlength="280" placeholder="Ej: después de caminar"></textarea>
+        </label>
+
+        <div class="form-actions">
+          <button type="button" class="btn danger" id="delete-btn" hidden>Eliminar</button>
+          <button type="submit" class="btn primary" id="save-btn">Guardar</button>
+        </div>
+      </form>
+    </div>
+
+    <!-- Data / options sheet -->
+    <div class="sheet-backdrop" id="menu-backdrop" hidden></div>
+    <div class="sheet" id="menu-sheet" role="dialog" aria-modal="true" aria-labelledby="menu-title" hidden>
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="sheet-head">
+        <h2 id="menu-title">Datos y copias</h2>
+        <button class="icon-btn" id="menu-close" aria-label="Cerrar">
+          <svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke-width="2.2" stroke-linecap="round" />
+          </svg>
+        </button>
+      </div>
+      <div class="menu-list">
+        <button class="menu-item" id="export-csv">
+          <span class="menu-item-title">Exportar CSV</span>
+          <span class="menu-item-sub">Para enviar al médico</span>
+        </button>
+        <button class="menu-item" id="export-json">
+          <span class="menu-item-title">Backup JSON</span>
+          <span class="menu-item-sub">Copia de seguridad completa</span>
+        </button>
+        <button class="menu-item" id="import-json">
+          <span class="menu-item-title">Restaurar desde JSON</span>
+          <span class="menu-item-sub">Reemplaza los datos actuales</span>
+        </button>
+        <input type="file" id="import-file" accept="application/json,.json" hidden />
+        <p class="menu-note" id="backup-note"></p>
+        <p class="menu-note" id="storage-note"></p>
+      </div>
+    </div>
+
+    <!-- Confirm dialog -->
+    <div class="sheet-backdrop" id="confirm-backdrop" hidden></div>
+    <div class="confirm" id="confirm-dialog" role="alertdialog" aria-modal="true" aria-labelledby="confirm-title" hidden>
+      <h2 id="confirm-title">¿Eliminar lectura?</h2>
+      <p id="confirm-text">Esta acción no se puede deshacer.</p>
+      <div class="confirm-actions">
+        <button class="btn" id="confirm-cancel">Cancelar</button>
+        <button class="btn danger" id="confirm-ok">Eliminar</button>
+      </div>
+    </div>
+
+    <!-- Daily backup prompt -->
+    <div class="sheet-backdrop" id="daily-backdrop" hidden></div>
+    <div class="confirm" id="daily-dialog" role="alertdialog" aria-modal="true" aria-labelledby="daily-title" hidden>
+      <div class="daily-icon" aria-hidden="true">
+        <img src="icons/favicon-32.png" alt="" width="34" height="34" />
+      </div>
+      <h2 id="daily-title">Cerraste el día</h2>
+      <p id="daily-text">
+        Registraste la <strong>Comida</strong>. Guardá una copia de seguridad del día para no
+        perder ningún dato — enviala a iCloud, Archivos o a tu correo.
+      </p>
+      <div class="confirm-actions">
+        <button class="btn" id="daily-later">Más tarde</button>
+        <button class="btn primary" id="daily-save">Guardar copia</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast" hidden></div>
+
+    <div id="update-toast" class="toast update" hidden>
+      <span>Nueva versión disponible</span>
+      <button id="update-btn" class="toast-btn">Actualizar</button>
+    </div>
+
+    <script type="module" src="js/app.js"></script>
+  </body>
+</html>
